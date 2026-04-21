@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stinson Services — Weekly Sales Review</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3a3d47;--ink-3:#72757f;--ink-4:#a8aab2;
+    --paper:#f5f3ee;--paper-2:#ede9e1;--paper-3:#e2ddd4;--rule:#d4cfc5;
+    --accent:#1a4a8a;--accent-lt:#e8eef7;
+    --green:#1a6640;--green-lt:#e6f2ec;
+    --amber:#8a4e00;--amber-lt:#fdf0e0;
+    --red:#8a1a1a;--red-lt:#fce8e8;
+    --serif:'DM Serif Display',Georgia,serif;
+    --sans:'Instrument Sans',system-ui,sans-serif;
+    --mono:'DM Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
+  .masthead{background:var(--ink);color:var(--paper);padding:22px 40px 18px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid var(--accent)}
+  .masthead h1{font-family:var(--serif);font-size:26px;font-weight:400;letter-spacing:-.3px;line-height:1.1}
+  .masthead h1 em{font-style:italic;color:#8fa8d0}
+  .masthead .sub{font-family:var(--mono);font-size:11px;color:#8fa8d0;margin-top:5px;letter-spacing:.08em}
+  .masthead-right{text-align:right}
+  .week-label{font-family:var(--mono);font-size:11px;color:#8fa8d0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+  .week-date{font-family:var(--serif);font-size:18px}
+  .toolbar{background:var(--paper-2);border-bottom:1px solid var(--rule);padding:10px 40px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .toolbar-label{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  .btn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:7px 16px;border:none;border-radius:5px;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:not(:disabled):hover{opacity:.85}
+  .btn-secondary{background:var(--paper-3);color:var(--ink-2)}.btn-secondary:hover{background:var(--rule)}
+  .sbadge{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:4px;white-space:nowrap}
+  .s-idle{background:var(--paper-3);color:var(--ink-3)}
+  .s-load{background:var(--amber-lt);color:var(--amber)}
+  .s-ok{background:var(--green-lt);color:var(--green)}
+  .s-err{background:var(--red-lt);color:var(--red)}
+  .upload-group{display:flex;gap:8px;flex:1}
+  .uslot{flex:1;display:flex;align-items:center;gap:8px;background:var(--paper);border:1px dashed var(--rule);border-radius:5px;padding:6px 12px;cursor:pointer;transition:border-color .15s}
+  .uslot:hover{border-color:var(--accent);background:var(--accent-lt)}
+  .uslot.loaded{border-style:solid;border-color:var(--green);background:var(--green-lt)}
+  .uslot label{font-size:12px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .uslot .fname{font-family:var(--mono);font-size:10px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .uslot input[type=file]{display:none}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--rule);flex-shrink:0}
+  .dot.on{background:var(--green)}
+  .vdiv{width:1px;height:24px;background:var(--rule)}
+  .main{padding:24px 40px 60px}
+  .divider{display:flex;align-items:center;gap:12px;margin:24px 0 14px}
+  .divider-label{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+  .divider-line{flex:1;height:1px;background:var(--rule)}
+  .stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:4px}
+  .stat{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:13px 15px;position:relative;overflow:hidden}
+  .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+  .stat.green::before{background:var(--green)}
+  .stat-label{font-size:11px;color:var(--ink-3);margin-bottom:3px}
+  .stat-val{font-family:var(--serif);font-size:22px;font-weight:400;line-height:1;color:var(--ink)}
+  .stat-sub{font-size:10px;color:var(--ink-4);margin-top:3px;font-family:var(--mono)}
+  .chart-wrap{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin-bottom:4px}
+  .chart-title{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:14px}
+  .rep-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .rep-card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+  .rep-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(26,74,138,.1)}
+  .rep-header{padding:13px 15px 11px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:9px}
+  .rep-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+  .rep-name{font-size:13px;font-weight:600;line-height:1.2}
+  .rep-target-lbl{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+  .rep-drill{font-family:var(--mono);font-size:9px;color:var(--accent);margin-top:2px;letter-spacing:.04em}
+  .rep-body{padding:11px 15px}
+  .rep-metric{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+  .rep-metric-label{font-size:11px;color:var(--ink-3)}
+  .rep-metric-val{font-size:13px;font-weight:600;font-family:var(--mono)}
+  .prog-wrap{margin:9px 0 3px}
+  .prog-label{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);font-family:var(--mono);margin-bottom:3px}
+  .prog-track{height:5px;background:var(--paper-3);border-radius:3px;overflow:hidden}
+  .prog-fill{height:100%;border-radius:3px;transition:width .4s ease}
+  .rep-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:9px;padding-top:9px;border-top:1px solid var(--rule)}
+  .pill{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px;white-space:nowrap}
+  .pill-green{background:var(--green-lt);color:var(--green)}
+  .pill-amber{background:var(--amber-lt);color:var(--amber)}
+  .pill-blue{background:var(--accent-lt);color:var(--accent)}
+  .pill-gray{background:var(--paper-3);color:var(--ink-3)}
+  .pill-red{background:var(--red-lt);color:var(--red)}
+  .table-wrap{background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:18px}
+  .table-head{padding:11px 18px;background:var(--paper-2);border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .table-head-title{font-size:12px;font-weight:600;color:var(--ink-2)}
+  .table-head-sub{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+  .filter-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  select,input[type=text]{font-family:var(--sans);font-size:12px;padding:5px 9px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);color:var(--ink);outline:none}
+  select:focus,input[type=text]:focus{border-color:var(--accent)}
+  table{width:100%;border-collapse:collapse}
+  thead th{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:8px 18px;text-align:left;background:var(--paper-2);border-bottom:1px solid var(--rule);white-space:nowrap}
+  thead th.r{text-align:right}
+  tbody tr{border-bottom:1px solid var(--rule);transition:background .1s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--paper-2)}
+  tbody td{padding:8px 18px;font-size:13px;color:var(--ink);vertical-align:middle}
+  tbody td.r{text-align:right}
+  tbody td.mono{font-family:var(--mono);font-size:12px}
+  .job-name{font-size:12px;font-weight:500}
+  .job-num{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+  .month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+  .month-cell{background:var(--paper);border:1px solid var(--rule);border-radius:7px;padding:9px 11px}
+  .month-cell.current{border-color:var(--accent);background:var(--accent-lt)}
+  .month-cell.past{opacity:.65}
+  .month-name{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.05em;margin-bottom:3px}
+  .month-target{font-size:12px;font-weight:600;color:var(--ink)}
+  .month-actual{font-family:var(--mono);font-size:10px;margin-top:2px}
+  .month-pip{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:1px}
+  .no-data{text-align:center;padding:36px 20px;color:var(--ink-4);font-size:13px}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,.6);z-index:1000;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--paper);border-radius:12px;width:100%;max-width:920px;overflow:hidden;border:1px solid var(--rule)}
+  .modal-hdr{background:var(--ink);color:var(--paper);padding:20px 26px;display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-family:var(--serif);font-size:22px;font-weight:400}
+  .modal-title em{font-style:italic;color:#8fa8d0}
+  .modal-close{background:none;border:none;color:#8fa8d0;font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+  .modal-close:hover{color:var(--paper)}
+  .modal-body{padding:22px 26px}
+  .mstat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+  .mstat{background:var(--paper-2);border-radius:7px;padding:12px 14px}
+  .mstat .lbl{font-size:11px;color:var(--ink-3);margin-bottom:3px}
+  .mstat .val{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1}
+  .mstat .sub{font-size:10px;color:var(--ink-4);margin-top:2px;font-family:var(--mono)}
+  .mstat.hi{background:var(--accent-lt);border:1px solid #b5c8e8}
+  .mstat.hi .lbl{color:var(--accent)}.mstat.hi .val{color:var(--accent)}
+  .modal-section-label{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+  .mtable{width:100%;border-collapse:collapse;font-size:13px}
+  .mtable th{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:7px 12px;text-align:left;background:var(--paper-2);border-bottom:1px solid var(--rule)}
+  .mtable th.r{text-align:right}
+  .mtable td{padding:8px 12px;border-bottom:1px solid var(--rule);color:var(--ink)}
+  .mtable td.r{text-align:right;font-family:var(--mono);font-size:12px}
+  .mtable tr:last-child td{border-bottom:none}
+  .mtable tr.cur td{background:var(--accent-lt)}
+
+  @media print{.toolbar,.modal-overlay{display:none!important}body{background:white}.rep-card,.stat,.table-wrap,.month-cell{break-inside:avoid}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .ani{animation:fadeIn .25s ease both}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div>
+    <h1>Stinson Services<br><em>Weekly Sales Review</em></h1>
+    <div class="sub">Sales period Apr 2026 – Mar 2027 &nbsp;·&nbsp; $6M team target &nbsp;·&nbsp; $1.5M per rep</div>
+  </div>
+  <div class="masthead-right">
+    <div class="week-label">Week of</div>
+    <div class="week-date" id="week-date">—</div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <span class="toolbar-label">Live data</span>
+  <button class="btn btn-primary" id="live-btn" onclick="fetchLive()">⟳ Refresh from JobNimbus</button>
+  <span class="sbadge s-idle" id="live-status">Not loaded</span>
+  <div class="vdiv"></div>
+  <span class="toolbar-label">Or upload CSV</span>
+  <div class="upload-group">
+    <div class="uslot" id="slot-fc" onclick="document.getElementById('inp-fc').click()">
+      <div class="dot" id="dot-fc"></div>
+      <label>Sales Forecasting</label>
+      <div class="fname" id="name-fc">No file</div>
+      <input type="file" id="inp-fc" accept=".csv">
+    </div>
+    <div class="uslot" id="slot-ap" onclick="document.getElementById('inp-ap').click()">
+      <div class="dot" id="dot-ap"></div>
+      <label>Estimates Approved</label>
+      <div class="fname" id="name-ap">No file</div>
+      <input type="file" id="inp-ap" accept=".csv">
+    </div>
+  </div>
+  <div class="vdiv"></div>
+  <button class="btn btn-secondary" onclick="window.print()">Print / PDF</button>
+</div>
+
+<div class="main">
+  <div class="divider"><span class="divider-label">Team overview</span><div class="divider-line"></div></div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-label">Pipeline — FY est. value</div><div class="stat-val" id="s-pipe">—</div><div class="stat-sub" id="s-pipe-sub">load data</div></div>
+    <div class="stat"><div class="stat-label">Weighted pipeline (FY)</div><div class="stat-val" id="s-wtd">—</div><div class="stat-sub" id="s-wtd-sub">confidence-adjusted</div></div>
+    <div class="stat green"><div class="stat-label">Closed won — FY to date</div><div class="stat-val" id="s-appr">—</div><div class="stat-sub" id="s-appr-sub">approved estimates</div></div>
+    <div class="stat"><div class="stat-label">YTD attainment</div><div class="stat-val" id="s-attain">—</div><div class="stat-sub" id="s-attain-sub">closed vs cum. target</div></div>
+    <div class="stat"><div class="stat-label">Full-year target</div><div class="stat-val">$6.0M</div><div class="stat-sub">Apr 2026 – Mar 2027</div></div>
+  </div>
+
+  <div class="divider"><span class="divider-label">Cumulative sales — actual vs target</span><div class="divider-line"></div></div>
+  <div class="chart-wrap">
+    <div class="chart-title">Team cumulative closed won vs cumulative sales target — FY Apr 2026 – Mar 2027</div>
+    <div style="position:relative;width:100%;height:260px">
+      <canvas id="cum-chart" role="img" aria-label="Cumulative sales line chart comparing actual closed won to target by month">Load data to view chart.</canvas>
+    </div>
+    <div style="display:flex;gap:20px;margin-top:10px;font-size:12px;color:var(--ink-3)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:22px;height:3px;background:#1a4a8a;display:inline-block;border-radius:2px"></span>Cum. target</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:22px;height:3px;background:#1a6640;display:inline-block;border-radius:2px"></span>Cum. actual (closed won)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#e8eef7;border:1px solid #b5c8e8;display:inline-block;border-radius:2px"></span>Monthly pipeline (weighted)</span>
+    </div>
+  </div>
+
+  <div class="divider"><span class="divider-label">Rep scorecards — click any card to drill down</span><div class="divider-line"></div></div>
+  <div class="rep-grid" id="rep-grid">
+    <div class="rep-card" style="opacity:.35"><div class="rep-header"><div class="rep-avatar" style="background:#ddd;color:#aaa">HS</div><div><div class="rep-name">Heidi Stinson</div><div class="rep-target-lbl">Target: $2,000,000</div></div></div><div class="rep-body"><div class="no-data" style="padding:18px 0;font-size:12px">Load data to view</div></div></div>
+    <div class="rep-card" style="opacity:.35"><div class="rep-header"><div class="rep-avatar" style="background:#ddd;color:#aaa">JV</div><div><div class="rep-name">Jeff Vacanti</div><div class="rep-target-lbl">Target: $1,000,000</div></div></div><div class="rep-body"><div class="no-data" style="padding:18px 0;font-size:12px">Load data to view</div></div></div>
+    <div class="rep-card" style="opacity:.35"><div class="rep-header"><div class="rep-avatar" style="background:#ddd;color:#aaa">JA</div><div><div class="rep-name">Jim Anderson</div><div class="rep-target-lbl">Target: $2,000,000</div></div></div><div class="rep-body"><div class="no-data" style="padding:18px 0;font-size:12px">Load data to view</div></div></div>
+    <div class="rep-card" style="opacity:.35"><div class="rep-header"><div class="rep-avatar" style="background:#ddd;color:#aaa">RS</div><div><div class="rep-name">Ryan Stinson</div><div class="rep-target-lbl">Target: $1,000,000</div></div></div><div class="rep-body"><div class="no-data" style="padding:18px 0;font-size:12px">Load data to view</div></div></div>
+  </div>
+
+  <div class="divider"><span class="divider-label">Open pipeline</span><div class="divider-line"></div></div>
+  <div class="table-wrap">
+    <div class="table-head">
+      <div><div class="table-head-title">Active opportunities</div><div class="table-head-sub" id="pipe-count">—</div></div>
+      <div class="filter-row">
+        <select id="f-rep" onchange="renderPipeline()"><option value="">All reps</option><option>Heidi Stinson</option><option>Jeff Vacanti</option><option>Jim Anderson</option><option>Ryan Stinson</option></select>
+        <select id="f-conf" onchange="renderPipeline()"><option value="">All confidence</option><option>High</option><option>Medium</option><option>Low</option></select>
+        <select id="f-status" onchange="renderPipeline()"><option value="">All statuses</option><option>Contract Signed</option><option>Contract Sent</option><option>Bid Creation</option><option>Appt Booked</option><option>Pending Adj. Mtg.</option><option>Adj. Mtg. Scheduled</option><option>Pending ISOW</option></select>
+        <input type="text" id="f-search" placeholder="Search…" oninput="renderPipeline()" style="width:130px">
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table><thead><tr>
+      <th style="width:30%">Job / Account</th><th style="width:11%">Rep</th><th style="width:15%">Status</th>
+      <th style="width:9%">Conf.</th><th class="r" style="width:12%">Est. value</th>
+      <th class="r" style="width:12%">Weighted</th><th style="width:11%">Est. close</th>
+    </tr></thead><tbody id="pipe-tbody"><tr><td colspan="7" class="no-data">Load data to view pipeline</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <div class="divider"><span class="divider-label">Approved estimates — FY Apr 2026 – Mar 2027 only</span><div class="divider-line"></div></div>
+  <div class="table-wrap">
+    <div class="table-head">
+      <div>
+        <div class="table-head-title">Closed won <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);font-weight:400">&nbsp;·&nbsp; FY only</span></div>
+        <div class="table-head-sub" id="appr-count">—</div>
+        <div id="fy-note" style="display:none;margin-top:3px;font-size:11px;color:var(--amber);font-family:var(--mono)"></div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table><thead><tr>
+      <th style="width:38%">Job / Account</th><th style="width:14%">Rep</th>
+      <th class="r" style="width:13%">Amount</th><th style="width:18%">Date approved</th><th style="width:17%">Estimate #</th>
+    </tr></thead><tbody id="appr-tbody"><tr><td colspan="5" class="no-data">Load data to view</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <div class="divider"><span class="divider-label">Monthly sales targets — sales close date</span><div class="divider-line"></div></div>
+  <div class="month-grid" id="month-grid"></div>
+</div>
+
+<!-- REP DRILL-DOWN MODAL -->
+<div class="modal-overlay" id="rep-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="modal-rep-name">Rep</div>
+        <div style="font-family:var(--mono);font-size:11px;color:#8fa8d0;margin-top:3px" id="modal-rep-sub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="mstat-row" id="modal-stats"></div>
+      <div class="modal-section-label">Monthly breakdown — sales target vs actual closed won</div>
+      <div style="overflow-x:auto;margin-bottom:22px">
+        <table class="mtable"><thead><tr>
+          <th>Month</th><th class="r">Rep target</th><th class="r">Closed won</th>
+          <th class="r">Variance</th><th class="r">Attainment</th><th>Pipeline (weighted)</th>
+        </tr></thead><tbody id="modal-month-tbody"></tbody></table>
+      </div>
+      <div class="modal-section-label">Open pipeline jobs (FY)</div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th style="width:38%">Job</th><th style="width:16%">Status</th><th style="width:10%">Conf.</th>
+          <th class="r" style="width:13%">Value</th><th class="r" style="width:13%">Weighted</th><th style="width:10%">Close</th>
+        </tr></thead><tbody id="modal-jobs-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const WEBHOOK = 'https://hook.us2.make.com/uegqaoxuhk8cs4ej5qd9vdci6vjg8zg1';
+const FY_START = new Date('2026-04-01');
+const FY_END   = new Date('2027-03-31T23:59:59');
+const REPS = [
+  {name:'Heidi Stinson',initials:'HS',target:1500000,color:'#2a5fa8',bg:'#e8eef7'},
+  {name:'Jeff Vacanti', initials:'JV',target:1500000,color:'#1a7a4a',bg:'#e6f2ec'},
+  {name:'Jim Anderson', initials:'JA',target:1500000,color:'#8a5a00',bg:'#fdf0e0'},
+  {name:'Ryan Stinson', initials:'RS',target:1500000,color:'#8a2040',bg:'#fce8ee'},
+];
+const MONTHS = [
+  {label:'Apr 2026',target:201991},{label:'May 2026',target:800000},
+  {label:'Jun 2026',target:910030},{label:'Jul 2026',target:914279},
+  {label:'Aug 2026',target:931000},{label:'Sep 2026',target:780000},
+  {label:'Oct 2026',target:665000},{label:'Nov 2026',target:532000},
+  {label:'Dec 2026',target:66500}, {label:'Jan 2027',target:66500},
+  {label:'Feb 2027',target:66500}, {label:'Mar 2027',target:66500},
+];
+const TOTAL_TARGET = MONTHS.reduce((s,m)=>s+m.target,0);
+const SP = {'Contract Sent':'pill-green','Contract Signed':'pill-green','Bid Creation':'pill-blue','Appt Booked':'pill-gray','Pending Adj. Mtg.':'pill-amber','Adj. Mtg. Scheduled':'pill-amber','Pending ISOW':'pill-blue'};
+const CP = {High:'pill-green',Medium:'pill-amber',Low:'pill-red'};
+const CW = {High:.75,Medium:.5,Low:.25};
+
+let pJobs=[], aJobs=[], cumChart=null;
+
+function $m(n){
+  if(n==null||isNaN(n))return'—';
+  const abs=Math.abs(n),sign=n<0?'-':'';
+  if(abs>=1e6)return sign+'$'+(abs/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';
+  if(abs>=1000)return sign+'$'+Math.round(abs).toLocaleString();
+  return sign+'$'+Math.round(abs).toLocaleString();
+}
+function pm(s){if(!s)return 0;return parseFloat(String(s).replace(/[$,\s]/g,'').replace('(','-').replace(')',''))||0;}
+function pd(s){if(!s)return null;const d=new Date(s);return isNaN(d)?null:d;}
+function ml(d){if(!d)return null;return d.toLocaleString('en-US',{month:'short',year:'numeric'});}
+function pill(t,c){return`<span class="pill ${c||'pill-gray'}">${t}</span>`}
+function inFY(d){return d&&d>=FY_START&&d<=FY_END;}
+function cw(c){return CW[c]||.25;}
+function exN(n){const m=n.match(/\d{4}-\d+/);return m?m[0]:'';}
+
+(function(){document.getElementById('week-date').textContent=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});})();
+
+(function buildGrid(){
+  const now=new Date(),cur=now.toLocaleString('en-US',{month:'short',year:'numeric'});
+  document.getElementById('month-grid').innerHTML=MONTHS.map((m,i)=>{
+    const dt=new Date(m.label),isPast=dt<new Date(now.getFullYear(),now.getMonth(),1);
+    return`<div class="month-cell ${m.label===cur?'current':''} ${isPast&&m.label!==cur?'past':''}" id="mc-${i}">
+      <div class="month-name">${m.label}</div><div class="month-target">${$m(m.target)}</div>
+      <div class="month-actual" id="mca-${i}" style="color:var(--ink-4)">—</div>
+      <div class="month-pip" id="mcp-${i}">—</div></div>`;
+  }).join('');
+})();
+
+// ─── LIVE FETCH ───────────────────────────────────────────
+async function fetchLive(){
+  const btn=document.getElementById('live-btn'),st=document.getElementById('live-status');
+  btn.disabled=true;st.className='sbadge s-load';st.textContent='Fetching from JobNimbus…';
+  try{
+    const r=await fetch(WEBHOOK);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    mapLive(data);
+    st.className='sbadge s-ok';st.textContent='Live — '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }catch(e){
+    st.className='sbadge s-err';st.textContent='Error: '+e.message+' — use CSV upload';
+  }finally{btn.disabled=false;}
+}
+
+function mapLive(data){
+  pJobs=(data.jobs||[]).map(j=>{
+    const val=pm(j.cf_est_job_value_forecast||j.contract_amount||0);
+    const conf=(j.cf_estimated_confidence_level||j.confidence||'').trim();
+    const cd=pd(j.cf_estimated_close_date||j.est_close_date);
+    return{name:j.name||j.display_name||'',rep:j.sales_rep_name||j.assigned_name||'',
+      status:j.status_name||j.job_status_name||'',confidence:conf,
+      value:val,weighted:val*cw(conf),closeDate:cd,closeMonth:ml(cd),inFY:!cd||inFY(cd)};
+  }).filter(j=>j.name);
+  aJobs=(data.estimates||[]).map(e=>{
+    const d=pd(e.date_status_change||e.approved_date||e.date_updated);
+    return{name:e.job_name||e.display_name||e.name||'',rep:e.sales_rep_name||e.assigned_name||'',
+      value:pm(e.total||e.amount||0),date:d,number:e.number||e.id||'',inFY:inFY(d)};
+  }).filter(e=>e.inFY&&e.name);
+  renderAll();
+}
+
+// ─── CSV PARSERS ──────────────────────────────────────────
+function procForecast(rows){
+  pJobs=rows.map(r=>{
+    const val=pm(r['🟡Est. Job Value (Forecast)']);
+    const conf=(r['🟡Estimated Confidence Level']||'').trim();
+    const cd=pd(r['🟡Estimated Close Date']);
+    return{name:(r['Name']||'').trim(),rep:(r['Sales Rep']||'').trim(),
+      status:(r['Status']||'').trim(),confidence:conf,
+      value:val,weighted:val*cw(conf),closeDate:cd,closeMonth:ml(cd),inFY:!cd||inFY(cd)};
+  }).filter(j=>j.name);
+  renderAll();
+}
+function procApproved(rows){
+  const all=rows.map(r=>{
+    const rel=(r['Related']||'').split('#')[0].trim();
+    const d=pd(r['Date Status Change']);
+    return{name:rel||r['Number']||'',rep:(r['Sales Rep']||'').trim(),
+      value:pm(r['Total']),date:d,number:r['Number']||'',inFY:inFY(d)};
+  }).filter(j=>j.name||j.number);
+  const excl=all.filter(j=>!j.inFY&&j.date);
+  aJobs=all.filter(j=>j.inFY);
+  const note=document.getElementById('fy-note');
+  if(excl.length){note.textContent=excl.length+' estimate(s) totalling '+$m(excl.reduce((s,j)=>s+j.value,0))+' excluded (outside FY).';note.style.display='block';}
+  else note.style.display='none';
+  renderAll();
+}
+
+// ─── RENDER ALL ──────────────────────────────────────────
+function renderAll(){renderStats();renderCumChart();renderRepCards();renderPipeline();renderApproved();renderMonthGrid();}
+
+// ─── STATS ───────────────────────────────────────────────
+function renderStats(){
+  const fy=pJobs.filter(j=>j.inFY);
+  const pipe=fy.reduce((s,j)=>s+j.value,0);
+  const wtd=fy.reduce((s,j)=>s+j.weighted,0);
+  const appr=aJobs.reduce((s,j)=>s+j.value,0);
+  const now=new Date();
+  const cumTgt=MONTHS.filter(m=>new Date(m.label)<=new Date(now.getFullYear(),now.getMonth(),1)).reduce((s,m)=>s+m.target,0);
+  const att=cumTgt>0?appr/cumTgt:0;
+  document.getElementById('s-pipe').textContent=$m(pipe);
+  document.getElementById('s-pipe-sub').textContent=fy.length+' jobs in FY';
+  document.getElementById('s-wtd').textContent=$m(wtd);
+  document.getElementById('s-wtd-sub').textContent='confidence-adjusted, FY only';
+  document.getElementById('s-appr').textContent=$m(appr);
+  document.getElementById('s-appr-sub').textContent=aJobs.length+' estimates in FY';
+  document.getElementById('s-attain').textContent=Math.round(att*100)+'%';
+  document.getElementById('s-attain-sub').textContent=$m(appr)+' of '+$m(cumTgt)+' cum. target';
+}
+
+// ─── CUMULATIVE CHART ────────────────────────────────────
+function renderCumChart(){
+  const closedByM={};aJobs.forEach(j=>{if(j.date){const l=ml(j.date);closedByM[l]=(closedByM[l]||0)+j.value;}});
+  const pipByM={};pJobs.filter(j=>j.inFY).forEach(j=>{if(j.closeMonth)pipByM[j.closeMonth]=(pipByM[j.closeMonth]||0)+j.weighted;});
+  const now=new Date();
+  let runT=0,runA=0;
+  const cumT=[],cumA=[],pipBar=[];
+  MONTHS.forEach(m=>{
+    runT+=m.target;cumT.push(runT);
+    const dt=new Date(m.label);
+    if(dt<=new Date(now.getFullYear(),now.getMonth(),1)){runA+=(closedByM[m.label]||0);cumA.push(runA);}
+    else cumA.push(null);
+    pipBar.push(pipByM[m.label]||0);
+  });
+  if(cumChart){cumChart.destroy();cumChart=null;}
+  cumChart=new Chart(document.getElementById('cum-chart'),{
+    type:'bar',
+    data:{labels:MONTHS.map(m=>m.label),datasets:[
+      {type:'bar',label:'Pipeline weighted',data:pipBar,backgroundColor:'rgba(26,74,138,.1)',borderColor:'rgba(26,74,138,.2)',borderWidth:1,order:3},
+      {type:'line',label:'Cumulative target',data:cumT,borderColor:'#1a4a8a',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#1a4a8a',tension:.3,order:1},
+      {type:'line',label:'Cumulative actual',data:cumA,borderColor:'#1a6640',backgroundColor:'transparent',borderWidth:2.5,borderDash:[6,3],pointRadius:4,pointBackgroundColor:'#1a6640',tension:.3,order:2,spanGaps:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+$m(c.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10},maxRotation:0,autoSkip:false,color:'#72757f'}},
+        y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{font:{size:10},color:'#72757f',callback:v=>'$'+(v>=1e6?(v/1e6).toFixed(1)+'M':v>=1000?Math.round(v/1000)+'K':v)}},
+      }
+    }
+  });
+}
+
+// ─── REP CARDS ───────────────────────────────────────────
+function renderRepCards(){
+  document.getElementById('rep-grid').innerHTML=REPS.map(rep=>{
+    const jobs=pJobs.filter(j=>j.rep===rep.name),fy=jobs.filter(j=>j.inFY);
+    const apprJ=aJobs.filter(j=>j.rep===rep.name);
+    const pipe=fy.reduce((s,j)=>s+j.value,0),wtd=fy.reduce((s,j)=>s+j.weighted,0);
+    const apprA=apprJ.reduce((s,j)=>s+j.value,0);
+    const pct=Math.min(wtd/rep.target,1.5),pctD=Math.round(Math.min(pct,1)*100);
+    const out=jobs.length-fy.length;
+    const barC=pct>=1?'var(--green)':pct>=.5?rep.color:'var(--amber)';
+    const sC={};fy.forEach(j=>{sC[j.status]=(sC[j.status]||0)+1;});
+    const cC={};fy.filter(j=>j.confidence).forEach(j=>{cC[j.confidence]=(cC[j.confidence]||0)+1;});
+    const sPills=Object.entries(sC).sort((a,b)=>b[1]-a[1]).map(([s,n])=>`<span class="pill ${SP[s]||'pill-gray'}">${s} (${n})</span>`).join('');
+    const cPills=['High','Medium','Low'].filter(c=>cC[c]).map(c=>`<span class="pill ${CP[c]}">${c}: ${cC[c]}</span>`).join('');
+    return`<div class="rep-card ani" onclick="openModal('${rep.name}')">
+      <div class="rep-header">
+        <div class="rep-avatar" style="background:${rep.bg};color:${rep.color}">${rep.initials}</div>
+        <div><div class="rep-name">${rep.name}</div><div class="rep-target-lbl">Target: ${$m(rep.target)}</div><div class="rep-drill">Click to drill down →</div></div>
+      </div>
+      <div class="rep-body">
+        <div class="rep-metric"><span class="rep-metric-label">Open pipeline (FY)</span><span class="rep-metric-val" style="color:${rep.color}">${$m(pipe)}</span></div>
+        <div class="rep-metric"><span class="rep-metric-label">Weighted pipeline (FY)</span><span class="rep-metric-val">${$m(wtd)}</span></div>
+        <div class="rep-metric"><span class="rep-metric-label">Closed won (FY)</span><span class="rep-metric-val" style="color:var(--green)">${$m(apprA)}</span></div>
+        <div class="rep-metric"><span class="rep-metric-label">FY jobs</span><span class="rep-metric-val">${fy.length}${out>0?` <span style="font-size:9px;color:var(--ink-4)">(+${out} outside)</span>`:''}</span></div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Wtd pipeline vs target</span><span>${pctD}%</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pctD}%;background:${barC}"></div></div>
+        </div>
+        ${cPills?`<div class="rep-pills">${cPills}</div>`:''}
+        ${sPills?`<div class="rep-pills">${sPills}</div>`:''}
+        ${fy.length===0?'<div class="no-data" style="padding:14px 0;font-size:12px">No open FY jobs</div>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── PIPELINE TABLE ──────────────────────────────────────
+function renderPipeline(){
+  const rF=document.getElementById('f-rep').value,cF=document.getElementById('f-conf').value;
+  const sF=document.getElementById('f-status').value,qF=(document.getElementById('f-search').value||'').toLowerCase();
+  let jobs=pJobs.filter(j=>{
+    if(rF&&j.rep!==rF)return false;if(cF&&j.confidence!==cF)return false;
+    if(sF&&j.status!==sF)return false;
+    if(qF&&!j.name.toLowerCase().includes(qF)&&!j.rep.toLowerCase().includes(qF))return false;
+    return true;
+  });
+  jobs.sort((a,b)=>(b.inFY?1:0)-(a.inFY?1:0)||b.value-a.value);
+  const fyC=jobs.filter(j=>j.inFY).length,outC=jobs.filter(j=>!j.inFY&&j.closeDate).length;
+  document.getElementById('pipe-count').textContent=fyC+' jobs in FY'+(outC?' · '+outC+' outside FY (grayed)':'');
+  if(!jobs.length){document.getElementById('pipe-tbody').innerHTML=`<tr><td colspan="7" class="no-data">No jobs match the filters</td></tr>`;return;}
+  document.getElementById('pipe-tbody').innerHTML=jobs.map(j=>{
+    const r=REPS.find(x=>x.name===j.rep),rC=r?r.color:'#666';
+    const out=!j.inFY&&j.closeDate;
+    return`<tr style="${out?'opacity:.4':''}">
+      <td><div class="job-name">${j.name.replace(/\s*-\s*\d{4}-\d+[^\s]*\s*$/,'').trim()||j.name}${out?`&nbsp;<span style="font-family:var(--mono);font-size:9px;color:var(--amber)">outside FY</span>`:''}</div><div class="job-num">${exN(j.name)}</div></td>
+      <td><span style="font-size:11px;font-weight:600;color:${rC}">${j.rep.split(' ').map(w=>w[0]).join('')}</span> <span style="font-size:10px;color:var(--ink-3)">${j.rep.split(' ')[0]}</span></td>
+      <td>${pill(j.status,SP[j.status])}</td>
+      <td>${j.confidence?pill(j.confidence,CP[j.confidence]):'<span style="color:var(--ink-4);font-size:10px">—</span>'}</td>
+      <td class="r mono">${j.value?$m(j.value):'—'}</td><td class="r mono">${j.weighted?$m(j.weighted):'—'}</td>
+      <td style="font-size:11px;color:var(--ink-3)">${j.closeMonth||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── APPROVED TABLE ──────────────────────────────────────
+function renderApproved(){
+  const jobs=aJobs.slice().sort((a,b)=>b.value-a.value);
+  document.getElementById('appr-count').textContent=jobs.length+' estimates · Total: '+$m(jobs.reduce((s,j)=>s+j.value,0));
+  if(!jobs.length){document.getElementById('appr-tbody').innerHTML=`<tr><td colspan="5" class="no-data">No approved estimates in FY</td></tr>`;return;}
+  document.getElementById('appr-tbody').innerHTML=jobs.map(j=>{
+    const r=REPS.find(x=>x.name===j.rep),rC=r?r.color:'#666';
+    const ds=j.date?j.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+    return`<tr>
+      <td><div class="job-name">${j.name.split('#')[0].trim()}</div></td>
+      <td><span style="font-size:12px;font-weight:500;color:${rC}">${j.rep}</span></td>
+      <td class="r mono" style="font-weight:600;color:var(--green)">${$m(j.value)}</td>
+      <td style="font-size:12px;color:var(--ink-3)">${ds}</td>
+      <td class="mono" style="font-size:10px;color:var(--ink-4)">${j.number}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── MONTH GRID ──────────────────────────────────────────
+function renderMonthGrid(){
+  const closedByM={};aJobs.forEach(j=>{if(j.date){const l=ml(j.date);closedByM[l]=(closedByM[l]||0)+j.value;}});
+  const pipByM={};pJobs.filter(j=>j.inFY).forEach(j=>{if(j.closeMonth)pipByM[j.closeMonth]=(pipByM[j.closeMonth]||0)+j.weighted;});
+  MONTHS.forEach((m,i)=>{
+    const cl=closedByM[m.label]||0,pip=pipByM[m.label]||0;
+    const ca=document.getElementById('mca-'+i),cp=document.getElementById('mcp-'+i);
+    if(ca){ca.textContent=cl>0?$m(cl)+' closed':'—';ca.style.color=cl>=m.target?'var(--green)':cl>0?'var(--ink-2)':'var(--ink-4)';}
+    if(cp){cp.textContent=pip>0?$m(pip)+' wtd pip':'—';cp.style.color=(pip+cl)>=m.target?'var(--green)':pip>0?'var(--accent)':'var(--ink-4)';}
+  });
+}
+
+// ─── REP DRILL-DOWN MODAL ────────────────────────────────
+function openModal(repName){
+  const rep=REPS.find(r=>r.name===repName);if(!rep)return;
+  document.getElementById('modal-rep-name').innerHTML=`${repName}&ensp;<em>Sales Detail</em>`;
+  document.getElementById('modal-rep-sub').textContent='Annual target: '+$m(rep.target)+' · FY Apr 2026 – Mar 2027';
+
+  const fy=pJobs.filter(j=>j.rep===repName&&j.inFY);
+  const apprJ=aJobs.filter(j=>j.rep===repName);
+  const totalAppr=apprJ.reduce((s,j)=>s+j.value,0);
+  const totalWtd=fy.reduce((s,j)=>s+j.weighted,0);
+  const now=new Date();
+  const cumRepTgt=MONTHS.filter(m=>new Date(m.label)<=new Date(now.getFullYear(),now.getMonth(),1))
+    .reduce((s,m)=>s+m.target*(rep.target/TOTAL_TARGET),0);
+  const ytdAtt=cumRepTgt>0?totalAppr/cumRepTgt:0;
+
+  document.getElementById('modal-stats').innerHTML=`
+    <div class="mstat hi"><div class="lbl">Closed won (FY)</div><div class="val">${$m(totalAppr)}</div><div class="sub">${apprJ.length} estimates</div></div>
+    <div class="mstat hi"><div class="lbl">YTD attainment</div><div class="val">${cumRepTgt>0?Math.round(ytdAtt*100)+'%':'—'}</div><div class="sub">${$m(totalAppr)} of ${$m(cumRepTgt)} cum. target</div></div>
+    <div class="mstat"><div class="lbl">Open pipeline (FY)</div><div class="val">${$m(fy.reduce((s,j)=>s+j.value,0))}</div><div class="sub">${fy.length} jobs</div></div>
+    <div class="mstat"><div class="lbl">Weighted pipeline (FY)</div><div class="val">${$m(totalWtd)}</div><div class="sub">${Math.round(Math.min(totalWtd/rep.target,1)*100)}% of annual target</div></div>`;
+
+  const closedByM={};apprJ.forEach(j=>{if(j.date){const l=ml(j.date);closedByM[l]=(closedByM[l]||0)+j.value;}});
+  const pipByM={};fy.forEach(j=>{if(j.closeMonth)pipByM[j.closeMonth]=(pipByM[j.closeMonth]||0)+j.weighted;});
+  const curLabel=now.toLocaleString('en-US',{month:'short',year:'numeric'});
+
+  document.getElementById('modal-month-tbody').innerHTML=MONTHS.map((m,i)=>{
+    const tgt=m.target*(rep.target/TOTAL_TARGET);
+    const cl=closedByM[m.label]||0,pip=pipByM[m.label]||0;
+    const variance=cl-tgt,att=tgt>0?cl/tgt:0;
+    const isCur=m.label===curLabel;
+    const pipPct=tgt>0?Math.min(pip/tgt,1)*100:0;
+    const vC=cl>0?(variance>=0?'var(--green)':'var(--red)'):'var(--ink-4)';
+    return`<tr class="${isCur?'cur':''}">
+      <td style="font-size:12px;font-weight:${isCur?'600':'400'}">${m.label}${isCur?' ◀':''}</td>
+      <td class="r">${$m(tgt)}</td>
+      <td class="r" style="color:${cl>0?'var(--green)':'var(--ink-4)'}">${cl>0?$m(cl):'—'}</td>
+      <td class="r" style="color:${vC}">${cl>0?(variance>=0?'+':'')+$m(variance):'—'}</td>
+      <td class="r" style="color:${att>=1?'var(--green)':att>0?'var(--amber)':'var(--ink-4)'}">${cl>0?Math.round(att*100)+'%':'—'}</td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;height:6px;background:var(--paper-3);border-radius:3px;overflow:hidden;min-width:60px"><div style="height:100%;border-radius:3px;background:var(--accent);width:${Math.round(pipPct)}%"></div></div>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3)">${pip>0?$m(pip):'—'}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  const sorted=fy.slice().sort((a,b)=>b.value-a.value);
+  document.getElementById('modal-jobs-tbody').innerHTML=sorted.length?sorted.map(j=>`<tr>
+    <td><div class="job-name" style="font-size:12px">${j.name}</div><div class="job-num">${exN(j.name)}</div></td>
+    <td>${pill(j.status,SP[j.status])}</td>
+    <td>${j.confidence?pill(j.confidence,CP[j.confidence]):'<span style="color:var(--ink-4);font-size:10px">—</span>'}</td>
+    <td class="r mono">${j.value?$m(j.value):'—'}</td>
+    <td class="r mono">${j.weighted?$m(j.weighted):'—'}</td>
+    <td style="font-size:11px;color:var(--ink-3)">${j.closeMonth||'—'}</td>
+  </tr>`).join(''):`<tr><td colspan="6" class="no-data" style="padding:18px">No open FY jobs</td></tr>`;
+
+  document.getElementById('rep-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){document.getElementById('rep-modal').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ─── CSV FILE HANDLERS ───────────────────────────────────
+document.getElementById('inp-fc').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  document.getElementById('name-fc').textContent=f.name;
+  document.getElementById('dot-fc').classList.add('on');
+  document.getElementById('slot-fc').classList.add('loaded');
+  Papa.parse(f,{header:true,skipEmptyLines:true,complete:r=>procForecast(r.data)});
+});
+document.getElementById('inp-ap').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  document.getElementById('name-ap').textContent=f.name;
+  document.getElementById('dot-ap').classList.add('on');
+  document.getElementById('slot-ap').classList.add('loaded');
+  Papa.parse(f,{header:true,skipEmptyLines:true,complete:r=>procApproved(r.data)});
+});
+
+// ─── DATA — Apr 21 2026 ───────────────────────────────────
+(function(){
+  const fCSV=`Date Created,Name,Record Type,Status,Sales Rep,🟡Estimated Confidence Level,🟡Est. Job Value (Forecast),🟡Estimated Roofing Area (SQ),🟡Estimated Siding Area (SQ),🟡Est. Gutter/Downspout (LF),🟡Est. Soffit/Fascia (LF),🟡Estimated Close Date
+4/6/2026 3:56 PM,Serafin Samson - 2026-2580,Residential Insurance,Adj. Mtg. Scheduled,Jim Anderson,,,,,,,
+3/18/2026 8:04 PM,Micon Properties LLC (315 Barstow) - 2026-2528,Commercial Insurance,Adj. Mtg. Scheduled,Ryan Stinson,Medium,10000,50,0,0,0,5/29/2026
+4/15/2026 2:44 PM,Nick Lockrem - 2026-2604,Residential Insurance,Adj. Mtg. Scheduled,Jeff Vacanti,,30000,0,0,0,0,5/29/2026
+3/26/2026 4:04 AM,Micon Properties LLC (313 Barstow) - 2026-2549,Commercial Insurance,Adj. Mtg. Scheduled,Ryan Stinson,Medium,35000,30,0,0,0,5/29/2026
+4/13/2026 8:21 AM,Nick Sandstrom - 2026-2598,Residential Insurance,Appt Booked,Heidi Stinson,,,,,,,
+4/14/2026 9:54 AM,Scoreboard Bar & Grill - 2026-2601,Commercial Retail,Appt Booked,Jeff Vacanti,,,,,,,
+4/16/2026 11:30 AM,Andrew Stone - 2026-2608,Residential Insurance,Appt Booked,Jeff Vacanti,,,,,,,
+4/20/2026 2:15 PM,Stephanie Dahms - 2026-2611,Residential Insurance,Appt Booked,Jeff Vacanti,,,,,,,
+4/16/2026 4:22 PM,Curt Wagner - 2026-2609,Residential Insurance,Appt Booked,Heidi Stinson,,,,,,,
+4/20/2026 9:45 AM,Jacob Hazzard - 2026-2612,Residential Insurance,Appt Booked,Jim Anderson,,,,,,,
+4/19/2026 3:10 PM,Susan Legan - 2026-2610,Residential Insurance,Appt Booked,Jim Anderson,,,,,,,
+2/18/2026 11:54 AM,Trinity Farm LLC - 2026-1148,Commercial Insurance,Bid Creation,Jim Anderson,High,849388.5,0,0,0,0,3/27/2026
+2/25/2026 11:47 AM,Scott Dunnewind - 2026-1201,Residential Insurance,Bid Creation,Jim Anderson,,62000,0,0,0,0,6/1/2026
+2/2/2026 12:09 PM,Mark & Cammie Larson - Siding - 2026-1098,Residential Retail,Bid Creation,Jeff Vacanti,High,25000,0,0,0,0,8/3/2026
+4/14/2026 10:05 AM,Jimmy's Kitchen (Small Repair) - 2026-2606,Commercial Retail,Bid Creation,Jeff Vacanti,Medium,10000,0,0,0,0,3/13/2026
+4/9/2026 5:00 PM,Ravi Sripada - 2026-2588,Residential Insurance,Bid Creation,Heidi Stinson,,,,,,,
+4/10/2026 1:30 PM,Kraus Anderson - Northfield River Park Mall - 2026-2593,Commercial Retail,Bid Creation,Jim Anderson,Low,335000,0,0,0,0,5/29/2026
+4/10/2026 2:00 PM,Kraus Anderson - Bloomington Valley West - 2026-2594,Commercial Retail,Bid Creation,Jim Anderson,Low,570000,0,0,0,0,4/30/2026
+4/3/2026 7:56 PM,Autumn Ambroday - 2026-2577,Residential Insurance,Bid Creation,Heidi Stinson,Low,65000,0,0,0,0,5/29/2026
+4/11/2026 9:15 AM,NRP - Full Proposal - Coon Rapids Speedway - 2026-2607,Commercial Retail,Bid Creation,Jim Anderson,Low,100000,0,0,0,0,5/29/2026
+3/31/2026 2:16 PM,Jan Poehland - 2026-2562,Residential Insurance,Bid Creation,Jeff Vacanti,,,,,,,
+2/28/2026 10:00 AM,Mary Velazquez - 2026-1225,Residential Insurance,Bid Creation,Ryan Stinson,High,50000,0,0,0,0,4/1/2026
+2/25/2026 8:39 AM,St Olaf Catholic Church - Eau Claire - 2026-1178,Commercial Insurance,Contract Sent,Jim Anderson,Medium,70000,0,0,0,0,6/1/2026
+2/25/2026 8:29 AM,Neil Kolatkar - 2026-1174,Commercial Insurance,Contract Sent,Jim Anderson,Low,75000,0,0,0,0,6/1/2026
+3/23/2026 8:15 AM,Aaron Sanders - 2026-2538,Residential Insurance,Contract Sent,Ryan Stinson,High,5000,0,0,0,0,4/10/2026
+2/28/2026 9:53 AM,Sam Holland - 2026-1224,Residential Insurance,Contract Sent,Jeff Vacanti,,8500,0,0,0,0,4/7/2026
+2/25/2026 8:55 AM,Jim Urban - 2026-1184,Residential Insurance,Contract Sent,Jim Anderson,Medium,35000,0,0,0,0,5/30/2026
+3/27/2026 3:11 PM,Alison & Mitch Boerner - 2026-2557,Residential Insurance,Contract Sent,Ryan Stinson,,,,,,,
+3/30/2026 12:21 PM,Chris Volker - Siding Repairs,Residential Retail,Contract Sent,Heidi Stinson,High,3000,0,0,0,0,3/27/2026
+2/25/2026 8:45 AM,Jon Cramer - 2026-1180,Residential Insurance,Contract Sent,Jim Anderson,High,9000,0,0,0,0,4/25/2026
+3/24/2026 1:27 PM,Will Cooksey - 2026-2544,Residential Retail,Contract Sent,Jim Anderson,Low,2000,0,0,0,0,4/30/2026
+4/7/2026 4:04 PM,Michael Bogden - 2026-2581,Residential Insurance,Contract Sent,Heidi Stinson,High,150000,0,0,0,0,5/10/2026
+4/8/2026 10:00 AM,NRP - Full Proposal - Aldi Elk River - 2026-2592,Commercial Retail,Contract Sent,Jim Anderson,Low,20000,0,0,0,0,4/30/2026
+4/9/2026 8:30 AM,NRP - Pep Boys Minneapolis - 2026-2602,Commercial Retail,Contract Sent,Jim Anderson,High,15000,0,0,0,0,4/30/2026
+4/1/2026 12:06 PM,NRP - JC Pennys Fargo - Full Proposal,Commercial Retail,Contract Sent,Jim Anderson,High,300,0,0,0,0,4/1/2026
+4/13/2026 3:45 PM,Martin Schmidt - 2026-2600,Residential Insurance,Contract Sent,Jeff Vacanti,,7000,,,,,
+2/25/2026 12:01 PM,Our Savior Lutheran Church - 2026-1207,Commercial Insurance,Contract Sent,Jim Anderson,Medium,2500,0,0,0,0,5/30/2026
+4/6/2026 1:34 PM,Jennifer & Mike Shinners - 2026-2578,Residential Insurance,Contract Sent,Heidi Stinson,Medium,3500,0,0,0,0,5/29/2026
+4/3/2026 7:17 PM,Spencer Schaber - 2026-2576,Residential Insurance,Contract Sent,Jeff Vacanti,,30000,0,0,0,0,4/30/2026
+2/5/2026 11:08 AM,Erica + Boris Kopilenko - 2026-1112,Residential Insurance,Contract Sent,Ryan Stinson,Low,5000,0,0,0,0,5/30/2026
+4/14/2026 2:00 PM,Dan Rogers - 2026-2559,Residential Insurance,Contract Signed,Jeff Vacanti,,,,,,,
+1/27/2026 12:32 PM,Bryan Benedict - 2026-1072,Residential Insurance,Contract Signed,Jeff Vacanti,Medium,25000,0,0,0,0,6/1/2026
+1/27/2026 10:49 AM,Fred Weiner - 2026-1066,Residential Insurance,Contract Signed,Jeff Vacanti,Medium,70000,,,,,
+4/17/2026 7:59 PM,John Melin - 2026-2589,Residential Insurance,Contract Signed,Heidi Stinson,,5000,0,0,0,0,4/17/2026
+4/20/2026 3:08 PM,Gail Gangstee - 2026-2591,Residential Insurance,Contract Signed,Jim Anderson,Low,2500,0,0,0,0,4/30/2026
+2/25/2026 8:20 AM,Larry Barnett - 2026-1170,Residential Insurance,Pending Adj. Mtg.,Jim Anderson,Low,35000,0,0,0,0,5/30/2026
+2/4/2026 4:12 PM,Lance Schwering - 2026-1111,Residential Insurance,Pending Adj. Mtg.,Heidi Stinson,Low,15000,0,0,0,0,5/30/2026
+3/18/2026 7:19 PM,Micon Cinemas Chippewa Falls - 2026-2527,Commercial Insurance,Pending Adj. Mtg.,Ryan Stinson,High,250000,0,0,0,0,4/30/2026
+2/25/2026 8:25 AM,Angela Pitsch - 2026-1172,Residential Insurance,Pending Adj. Mtg.,Jim Anderson,Low,25000,0,0,0,0,5/29/2026
+4/12/2026 11:00 AM,Feleke Hassena - 2026-2605,Residential Insurance,Pending Adj. Mtg.,Jim Anderson,,25000,0,0,0,0,4/24/2026
+2/25/2026 11:37 AM,Ted Bickel - 2026-1197,Residential Insurance,Pending ISOW,Jim Anderson,High,90000,0,0,0,0,5/30/2026
+2/25/2026 11:26 AM,Travis Johnson - 2026-1193,Residential Insurance,Pending ISOW,Jim Anderson,Medium,50000,0,0,0,0,5/30/2026
+3/25/2026 3:43 PM,Troy Simek - 2026-2547,Residential Insurance,Pending ISOW,Jeff Vacanti,Medium,40000,0,0,0,0,5/4/2026`;
+  const aCSV=`Status,Date Status Change,Number,Sales Rep,Subtotal,Tax,Total,Created By,Related
+Approved,4/20/2026 3:52 PM,#1272,Jim Anderson,$28400.00,$0.00,$28400.00,SumoQuote,Jesuit Retreat House - Regis Building - 2026-2534
+Approved,4/17/2026 7:20 AM,#1266,Jim Anderson,($200.00),$0.00,($200.00),SumoQuote,Whitney Bak - 2026-1203
+Approved,4/15/2026 11:22 AM,#1262,Jeff Vacanti,$10716.43,$0.00,$10716.43,SumoQuote,Fred Weiner - 2026-1066
+Approved,4/20/2026 3:08 PM,#1261,Jim Anderson,$5500.00,$0.00,$5500.00,SumoQuote,Gail Gangstee - 2026-2591
+Approved,4/16/2026 10:47 AM,#1260,Jim Anderson,$1000.00,$0.00,$1000.00,SumoQuote,Budish - US Bank Hopkins - 2026-2568
+Approved,4/17/2026 7:59 PM,#1258,Heidi Stinson,$6750.00,$0.00,$6750.00,SumoQuote,John Melin - 2026-2589
+Approved,4/14/2026 10:27 AM,#1257,Josh Gerick,$1320.00,$0.00,$1320.00,SumoQuote,NRP - Duluth Fresenius Kidney Care - 2026-2590
+Approved,4/14/2026 2:45 PM,#1256,Jim Anderson,$400.00,$0.00,$400.00,SumoQuote,Handy Help LLC Building - 2026-2572
+Approved,4/14/2026 11:09 AM,#1255,Ryan Stinson,$550.00,$0.00,$550.00,SumoQuote,Kevin Ryan - 2026-2599
+Approved,4/9/2026 9:08 AM,#1251,Jim Anderson,$640.00,$0.00,$640.00,SumoQuote,NRP - Aldi - Elk River - 2026-2586
+Approved,4/10/2026 3:40 PM,#1248,Jim Anderson,$34832.07,$0.00,$34832.07,SumoQuote,Yanni Pantazides - 2026-1199
+Approved,4/3/2026 3:33 PM,#1215,Jim Anderson,$10240.73,$0.00,$10240.73,SumoQuote,New Lisbon St. Paul Catholic Church - 2026-1209
+Approved,4/3/2026 12:07 PM,#1214,Jim Anderson,$475.00,$0.00,$475.00,SumoQuote,Larson - Siding Repair - 2026-2570
+Approved,4/3/2026 9:50 AM,#1213,Jim Anderson,$200.00,$0.00,$200.00,SumoQuote,NRP - Blaine Speedway Gas Station - 2026-2573
+Approved,4/2/2026 12:51 PM,#1212,Jim Anderson,$300.00,$0.00,$300.00,SumoQuote,NRP - JC Pennys Fargo - Service Repair - 2026-2571
+Approved,4/6/2026 7:41 PM,#1210,Heidi Stinson,$8000.00,$0.00,$8000.00,SumoQuote,Leroy H Jessen - 2026-2556
+Approved,4/1/2026 8:21 AM,#1130,Jeff Vacanti,$8750.00,$0.00,$8750.00,SumoQuote,Jimmy's Kitchen Large Repair - 2026-2508
+Approved,4/15/2026 8:29 AM,#1263,Jeff Vacanti,$57000.00,$0.00,$57000.00,SumoQuote,Fred Weiner - 2026-1066
+Approved,4/13/2026 8:38 PM,#1252,Jeff Vacanti,$24089.67,$0.00,$24089.67,SumoQuote,Bryan Benedict - 2026-1072`;
+  Papa.parse(fCSV,{header:true,skipEmptyLines:true,complete:r=>procForecast(r.data)});
+  Papa.parse(aCSV,{header:true,skipEmptyLines:true,complete:r=>procApproved(r.data)});
+})();
+</script>
+</body>
+</html>
